@@ -332,6 +332,23 @@ function renderNotes() {
     content.textContent = note.content || "本文なし";
     content.style.cssText =
       "margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere";
+    
+var dateInfo = document.createElement("div");
+
+var createdText = note.created
+  ? new Date(note.created).toLocaleString("ja-JP")
+  : "記録なし";
+
+var updatedText = note.updated
+  ? new Date(note.updated).toLocaleString("ja-JP")
+  : "記録なし";
+
+dateInfo.textContent =
+  "作成：" + createdText + " ／ 最終更新：" + updatedText;
+
+dateInfo.style.cssText =
+  "font-size:12px;color:#777;margin-bottom:10px";
+
 
 // ピン留め
 var pinButton = document.createElement("button");
@@ -368,6 +385,7 @@ deleteButton.addEventListener("click", function() {
 });
 card.appendChild(title);
 card.appendChild(content);
+card.appendChild(dateInfo);
 card.appendChild(pinButton);
 card.appendChild(editButton);
 card.appendChild(deleteButton);
