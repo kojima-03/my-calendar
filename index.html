@@ -46,6 +46,7 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
   
 
 
+
 #viewTabs {
   display: flex;
   align-items: center;
@@ -57,7 +58,6 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
   border-radius: 999px;
   background: color-mix(in srgb,var(--text) 7%,transparent);
 }
-
 
 #viewTabs button {
   flex: 1 1 0;
@@ -79,6 +79,7 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
   box-shadow: 0 2px 8px color-mix(in srgb,var(--accent) 40%,transparent);
   transform: none;
 }
+
 
 
 .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -131,7 +132,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 </head>
 <body>
 <div class="wrap">
-<div class="seg" id="viewTabs">
+<div id="viewTabs">
   <button type="button" id="calendarTab" class="on">カレンダー</button>
   <button type="button" id="notesTab">ノート</button>
 </div>
