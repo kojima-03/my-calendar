@@ -310,8 +310,13 @@ function renderNotes() {
   }
 
   notes.sort(function(a, b) {
-    return b.updated - a.updated;
-  });
+  // ピン留めされたノートを先に表示
+  if (a.pinned && !b.pinned) return -1;
+  if (!a.pinned && b.pinned) return 1;
+
+  // 同じ状態なら更新日時の新しい順
+  return b.updated - a.updated;
+});
 
   notes.forEach(function(note) {
     var card = document.createElement("div");
