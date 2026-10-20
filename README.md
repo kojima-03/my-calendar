@@ -101,4 +101,4 @@ my-calendar/
 
 ## 作者
 
-（あなたの名前）
+Emi Kojima
