@@ -44,24 +44,36 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
 .seg{display:flex;gap:6px}.seg button{flex:1}.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .empty{color:var(--sub);font-size:13px}
   
+
 #viewTabs {
   display: flex;
+  align-items: center;
   gap: 6px;
   margin-bottom: 12px;
+  padding: 4px;
+  border-radius: 999px;
 }
 
 #viewTabs button {
-  flex: 1;
-  font-size: 14px;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  height: auto;
   padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 14px;
   line-height: 1.4;
+  font-weight: 400;
+  transform: none;
 }
 
 #viewTabs button.on {
   background: var(--accent);
   color: #fff;
-  border-color: var(--accent);
+  box-shadow: 0 2px 8px color-mix(in srgb,var(--accent) 40%,transparent);
 }
+
 
 .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal[hidden]{display:none}
