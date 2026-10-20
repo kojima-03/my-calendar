@@ -282,6 +282,138 @@ function save(){
   }
 }
 
+/* ノート機能 */
+if (!Array.isArray(S.notes)) {
+  S.notes = [];
+}
+
+var editingNoteId = null;
+
+// ノート一覧を表示
+function renderNotes() {
+  var list = $("notesList");
+  var keyword = $("noteSearch").value.trim().toLowerCase();
+
+  list.innerHTML = "";
+
+  var notes = S.notes.filter(function(note) {
+    return (note.title + " " + note.content)
+      .toLowerCase()
+      .includes(keyword);
+  });
+
+  if (notes.length === 0) {
+    list.textContent = keyword
+      ? "検索結果がありません"
+      : "まだノートがありません";
+    return;
+  }
+
+  notes.sort(function(a, b) {
+    return b.updated - a.updated;
+  });
+
+  notes.forEach(function(note) {
+    var card = document.createElement("div");
+    card.style.cssText =
+      "padding:12px;margin-top:8px;border:1px solid var(--line);" +
+      "border-radius:12px;background:var(--card)";
+
+    var title = document.createElement("h3");
+    title.textContent = note.title || "無題のノート";
+    title.style.margin = "0 0 6px";
+
+    var content = document.createElement("p");
+    content.textContent = note.content || "本文なし";
+    content.style.cssText =
+      "margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere";
+
+    var editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.textContent = "開いて編集";
+    editButton.addEventListener("click", function() {
+      openNote(note.id);
+    });
+
+    card.appendChild(title);
+    card.appendChild(content);
+    card.appendChild(editButton);
+    list.appendChild(card);
+  });
+}
+
+// 新規作成・編集画面を開く
+function openNote(id) {
+  var note = S.notes.find(function(item) {
+    return item.id === id;
+  });
+
+  editingNoteId = id || null;
+
+  $("noteTitle").value = note ? note.title : "";
+  $("noteContent").value = note ? note.content : "";
+  $("noteEditor").hidden = false;
+  $("noteTitle").focus();
+}
+
+// ノートを保存
+function saveNote() {
+  var title = $("noteTitle").value.trim();
+  var content = $("noteContent").value;
+
+  if (!title && !content.trim()) {
+    alert("タイトルか本文を入力してください");
+    return;
+  }
+
+  var now = Date.now();
+
+  if (editingNoteId) {
+    var note = S.notes.find(function(item) {
+      return item.id === editingNoteId;
+    });
+
+    if (note) {
+      note.title = title;
+      note.content = content;
+      note.updated = now;
+    }
+  } else {
+    S.notes.push({
+      id: String(now) + "-" + Math.random().toString(36).slice(2, 8),
+      title: title,
+      content: content,
+      updated: now
+    });
+  }
+
+  save();
+  renderNotes();
+
+  $("noteEditor").hidden = true;
+  editingNoteId = null;
+}
+
+// 新しいノート
+$("newNoteBtn").addEventListener("click", function() {
+  openNote(null);
+});
+
+// 保存ボタン
+$("saveNoteBtn").addEventListener("click", saveNote);
+
+// キャンセルボタン
+$("cancelNoteBtn").addEventListener("click", function() {
+  $("noteEditor").hidden = true;
+  editingNoteId = null;
+});
+
+// 検索
+$("noteSearch").addEventListener("input", renderNotes);
+
+// 最初の一覧表示
+renderNotes();
+
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function $(id){return document.getElementById(id)}
 function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
