@@ -89,9 +89,30 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes slideup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="wrap">
+  
+<div class="card" id="authPanel">
+  <h2>マイカレンダー</h2>
+  <p>ログインして、予定をどの端末からでも確認しよう。</p>
+
+  <label for="authEmail">メールアドレス</label>
+  <input id="authEmail" type="email"
+         placeholder="メールアドレスを入力" autocomplete="email">
+
+  <label for="authPassword">パスワード</label>
+  <input id="authPassword" type="password"
+         placeholder="パスワードを入力"
+         autocomplete="current-password">
+
+  <button id="loginBtn" type="button">ログイン</button>
+  <button id="signupBtn" type="button">新規登録</button>
+
+  <p id="authMessage" role="status"></p>
+</div>
+
 <div class="card">
   <div class="head"><button id="prev">‹</button><h2 id="title"></h2><button id="next">›</button><button id="today">今日</button></div>
   <div class="grid" id="grid"></div>
@@ -126,10 +147,47 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 <script>
 var KEY="mycal-v1",S={items:[]},view=new Date(),sel=ymd(new Date()),mode="ev";
 try{var raw=localStorage.getItem(KEY);if(raw)S=JSON.parse(raw)}catch(e){}
+
 var ref=null,pushT=null,first=true;
-function setSync(t){$("sync").textContent=t}
-function push(){if(!ref)return;ref.set({json:JSON.stringify(S)}).then(function(){setSync("同期済み")}).catch(function(){setSync("同期できませんでした（この端末には保存済み）")})}
-function save(){S.updated=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(ref){clearTimeout(pushT);pushT=setTimeout(push,500)}}
+var supabaseClient=null,currentUser=null,cloudReady=false;
+
+function setSync(t){
+  $("sync").textContent=t;
+}
+
+function push(){
+  if(!supabaseClient||!currentUser||!cloudReady)return;
+
+  supabaseClient
+    .from("calendar_data")
+    .upsert({
+      user_id:currentUser.id,
+      data:S,
+      updated_at:new Date().toISOString()
+    })
+    .then(function(result){
+      if(result.error)throw result.error;
+      setSync("同期済み");
+    })
+    .catch(function(error){
+      console.error(error);
+      setSync("同期できませんでした（この端末には保存済み）");
+    });
+}
+
+function save(){
+  S.updated=Date.now();
+
+  try{
+    localStorage.setItem(KEY,JSON.stringify(S));
+  }catch(e){}
+
+  if(currentUser&&cloudReady){
+    clearTimeout(pushT);
+    pushT=setTimeout(push,500);
+  }
+}
+
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function $(id){return document.getElementById(id)}
 function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -358,18 +416,201 @@ function drawDay(k){
 }
 $("fab").onclick=function(){openForm()};
 $("fDate").value=sel;setMode("ev");applyBg();drawSw();render();
-try{
-  if(window.claude&&claude.use){
-    Promise.all([claude.use("db"),claude.use("user")]).then(function(a){
-      if(!a[0]||!a[1])return;
-      return a[1].id().then(function(uid){
-        if(!uid)return;
-        ref=a[0].doc("data/users/"+uid+"/cal");setSync("同期中…");
-        ref.onSnapshot(applyRemote,function(){setSync("同期できません（この端末のみ）")});
-      });
-    }).catch(function(){});
+
+var SUPABASE_URL = "https://gavglcmughiffuvaoeth.supabase.co/rest/v1/";
+var SUPABASE_KEY = "sb_publishable_FnWp2dhIHjniw8NdnHL_HQ_TEgL3fJg";
+
+var activeUid = null;
+
+function showAuth(loggedIn) {
+  $("authPanel").hidden = loggedIn;
+
+  document.querySelectorAll(".wrap > .card:not(#authPanel)")
+    .forEach(function(card) {
+      card.hidden = !loggedIn;
+    });
+
+  $("fab").hidden = !loggedIn;
+
+  if (!loggedIn) {
+  $("formModal").hidden = true;
+}
+  logoutBtn.hidden = !loggedIn;
+}
+
+var logoutBtn = document.createElement("button");
+logoutBtn.textContent = "ログアウト";
+logoutBtn.style.marginTop = "8px";
+$("sync").insertAdjacentElement("afterend", logoutBtn);
+logoutBtn.hidden = true;
+
+async function handleSession(session) {
+  if (!session) {
+    activeUid = null;
+    currentUser = null;
+    cloudReady = false;
+    showAuth(false);
+    setSync("ログインしてください");
+    return;
   }
-}catch(e){}
+
+  var user = session.user;
+
+  if (activeUid === user.id && cloudReady) return;
+
+  activeUid = user.id;
+  currentUser = user;
+  cloudReady = false;
+
+  showAuth(true);
+  setSync("同期中…");
+  $("authMessage").textContent = "";
+
+  try {
+    var result = await supabaseClient
+      .from("calendar_data")
+      .select("data")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (result.error) throw result.error;
+
+    if (result.data) {
+      // クラウドにデータがあれば、そちらを読み込む
+      var remote = result.data.data;
+
+      if (!remote || !Array.isArray(remote.items)) {
+        throw new Error("保存データの形式を確認できません");
+      }
+
+      S = remote;
+
+      try {
+        localStorage.setItem(KEY, JSON.stringify(S));
+      } catch (e) {}
+
+      applyBg();
+      drawSw();
+      render();
+    } else {
+      // 初回は今の端末にあるデータをクラウドへ保存
+      cloudReady = true;
+      await push();
+
+      setSync("初回データを保存しました");
+      return;
+    }
+
+    cloudReady = true;
+    setSync("同期済み");
+
+  } catch (error) {
+    cloudReady = false;
+    console.error(error);
+    setSync("同期エラー：接続設定を確認してください");
+  }
+}
+
+if (
+  !SUPABASE_URL.startsWith("https://") ||
+  SUPABASE_URL.includes("https://gavglcmughiffuvaoeth.supabase.co/rest/v1/") ||
+  SUPABASE_KEY.includes("sb_publishable_FnWp2dhIHjniw8NdnHL_HQ_TEgL3fJg")
+) {
+  showAuth(false);
+  setSync("Supabaseの接続情報を設定してください");
+} else {
+  supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  $("signupBtn").onclick = async function() {
+    var email = $("authEmail").value.trim();
+    var password = $("authPassword").value;
+
+    if (!email || !password) {
+      $("authMessage").textContent =
+        "メールアドレスとパスワードを入力してください";
+      return;
+    }
+
+    $("authMessage").textContent = "登録中…";
+
+    var result = await supabaseClient.auth.signUp({
+      email: email,
+      password: password
+    });
+
+    if (result.error) {
+      $("authMessage").textContent =
+        "登録できませんでした：" + result.error.message;
+      return;
+    }
+
+    if (result.data.session) {
+      $("authMessage").textContent = "登録しました";
+      await handleSession(result.data.session);
+    } else {
+      $("authMessage").textContent =
+        "確認メールを送信しました。メール内のリンクを開いてからログインしてください。";
+    }
+  };
+
+  $("loginBtn").onclick = async function() {
+    var email = $("authEmail").value.trim();
+    var password = $("authPassword").value;
+
+    if (!email || !password) {
+      $("authMessage").textContent =
+        "メールアドレスとパスワードを入力してください";
+      return;
+    }
+
+    $("authMessage").textContent = "ログイン中…";
+
+    var result = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (result.error) {
+      $("authMessage").textContent =
+        "ログインできませんでした：" + result.error.message;
+      return;
+    }
+
+    await handleSession(result.data.session);
+  };
+
+  logoutBtn.onclick = async function() {
+    var result = await supabaseClient.auth.signOut();
+
+    if (result.error) {
+      setSync("ログアウトできませんでした");
+      return;
+    }
+
+    // 予定データはlocalStorageに残す
+    setSync("ログアウトしました");
+  };
+
+  supabaseClient.auth.onAuthStateChange(function(event, session) {
+    setTimeout(function() {
+      handleSession(session);
+    }, 0);
+  });
+
+  supabaseClient.auth.getSession().then(function(result) {
+    if (result.error) {
+      console.error(result.error);
+      setSync("ログイン状態を確認できませんでした");
+      return;
+    }
+
+    handleSession(result.data.session);
+  });
+}
+
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 </body>
