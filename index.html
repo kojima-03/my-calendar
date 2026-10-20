@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <title>マイカレンダー</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2f6fed">
+<meta name="theme-color" content="#5468f0">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -42,8 +43,51 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:8px}
 input[type=text],input[type=date],input[type=time],select,textarea{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px}
 .seg{display:flex;gap:6px}.seg button{flex:1}.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .empty{color:var(--sub);font-size:13px}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal[hidden]{display:none}
+.mcard{width:100%;max-width:420px;max-height:80vh;overflow:auto;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:14px}
 .sw{width:30px;height:30px;padding:0;border-radius:50%}
+#fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;font-size:28px;line-height:1;padding:0;z-index:30;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#formModal{align-items:flex-end}
+#formModal .mcard{max-width:520px;max-height:90vh;border-radius:16px 16px 0 0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+@media(min-width:800px){#formModal{align-items:center}#formModal .mcard{border-radius:12px;max-width:420px}}
 @media(max-width:600px){body{padding:8px}.day{min-height:64px}.item{font-size:10px}}
+:root{--accent:#5468f0;--task:#e8890c;--line:#e8e6e1}
+body{font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;background:linear-gradient(160deg,var(--bg),color-mix(in srgb,var(--accent) 7%,var(--bg))) fixed;min-height:100vh}
+.card{border-radius:20px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);box-shadow:0 10px 30px rgba(30,40,80,.07);padding:16px}
+.head h2{font-size:21px;letter-spacing:.06em;font-weight:700}
+.head button{width:38px;height:38px;padding:0;border-radius:50%;font-size:18px;line-height:1}
+#today{width:auto;padding:0 14px;border-radius:999px;font-size:13px}
+button{border-radius:999px;transition:transform .12s,box-shadow .12s,background .15s}
+button:active{transform:scale(.96)}
+button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 65%,#9b5cf6));border:0;color:#fff;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 40%,transparent)}
+.seg{background:color-mix(in srgb,var(--text) 7%,transparent);padding:4px;border-radius:999px}
+.seg button{border:0;background:transparent}
+.seg button.on{background:var(--accent);color:#fff;box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 40%,transparent)}
+input[type=text],input[type=date],input[type=time],select,textarea{border-radius:12px;padding:9px 11px;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.grid{gap:5px}
+.dow{font-size:12px;font-weight:700;letter-spacing:.05em;padding:4px 0}
+.dow:nth-child(7n+1){color:#e5575c}.dow:nth-child(7n){color:#4a8cf0}
+.day{border-radius:14px;border:1px solid transparent;background:var(--daybg,color-mix(in srgb,var(--text) 3.5%,transparent));transition:background .15s,border-color .15s}
+.day:hover{border-color:var(--line)}
+.num{font-size:12px;font-weight:700;margin:1px 0 2px 2px}
+.day:nth-child(7n+1) .num{color:#e5575c}.day:nth-child(7n) .num{color:#4a8cf0}
+.day.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.day.today{background:var(--today)}
+.day.today .num{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:var(--accent);color:#fff}
+.ev{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);border-left:3px solid var(--accent);border-radius:5px;font-weight:700;padding:1px 4px}
+.ev[style]{background:color-mix(in srgb,#2e9d6b 17%,transparent)!important;color:#2e9d6b;border-left-color:#2e9d6b}
+.card>h3{font-size:12px;letter-spacing:.1em;color:var(--sub);font-weight:700;margin:18px 0 6px}
+.row{border-bottom:1px dashed var(--line);padding:7px 0}
+.modal{backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:fadein .18s ease}
+.mcard{border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.28);animation:pop .22s ease}
+#formModal .mcard{border-radius:24px 24px 0 0;animation:slideup .26s ease}
+@media(min-width:800px){#formModal .mcard{border-radius:22px;animation:pop .22s ease}}
+#fab{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#9b5cf6));box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 45%,transparent)}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes slideup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -53,7 +97,7 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
   <div class="grid" id="grid"></div>
 </div>
 <div class="card">
-  <h3 style="margin-top:0" id="selTitle"></h3>
+  <div class="modal" id="formModal" hidden><div class="mcard" id="formBox"><div style="display:flex;align-items:center;gap:8px"><h3 style="margin:0;flex:1;font-size:17px" id="selTitle"></h3><button data-closeform="1">閉じる</button></div>
   <div class="seg"><button id="mEv" class="on">予定</button><button id="mTk">タスク</button><button id="mLs">リスト</button></div>
   <label>タイトル</label><input type="text" id="fTitle" placeholder="例：レポート提出">
   <label id="dLabel">日付</label><input type="date" id="fDate">
@@ -67,8 +111,8 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
   <label>場所（任意）</label><input type="text" id="fPlace" placeholder="例：天神 カフェ">
   <label>メモ（任意）</label><textarea id="fMemo" rows="3" placeholder="持ち物、URL、補足など"></textarea>
   <div style="margin-top:10px"><button class="primary" id="add">追加</button> <button id="cancel" hidden>キャンセル</button></div>
-  <div id="msg" class="empty over"></div>
-  <h3>この日の予定・タスク</h3><div id="dayList"></div>
+  <div id="msg" class="empty over"></div></div></div>
+  <h3 style="margin-top:0">この日の予定・タスク</h3><div id="dayList"></div>
   <h3>リスト</h3><div id="listBox"></div>
   <h3>期限切れ・今後のタスク</h3><div id="taskList"></div>
   <h3>完了済み <button id="togDone" style="font-size:12px;padding:2px 8px">表示</button></h3><div id="doneList" hidden></div>
@@ -77,6 +121,8 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
   <div style="margin-top:12px"><button id="notif">通知を許可</button> <small class="empty">ページを開いている間だけ通知されます</small></div>
 </div>
 </div>
+<button id="fab" class="primary" aria-label="新規作成">＋</button>
+<div class="modal" id="modal" hidden><div class="mcard" id="mCard"><div id="mBody"></div></div></div>
 <script>
 var KEY="mycal-v1",S={items:[]},view=new Date(),sel=ymd(new Date()),mode="ev";
 try{var raw=localStorage.getItem(KEY);if(raw)S=JSON.parse(raw)}catch(e){}
@@ -101,8 +147,8 @@ function render(){
     var list=S.items.filter(function(x){return x.date===k&&!x.done&&!(x.type==="list"&&(x.items||[]).length&&(x.items||[]).every(function(i){return i.d}))}).sort(function(a,b){return (a.time||"99").localeCompare(b.time||"99")});
     list.slice(0,3).forEach(function(x){
       if(x.type==="task")html+='<label class="item tk" style="margin-top:2px;font-size:11px;color:var(--task)"><input type="checkbox" data-id="'+x.id+'"><span>'+esc(x.title)+'</span></label>';
-      else if(x.type==="list")html+='<div class="item"><span class="ev" style="background:#2e9d6b">📋 '+esc(x.title)+' '+(x.items||[]).filter(function(i){return i.d}).length+'/'+(x.items||[]).length+'</span></div>';
-      else html+='<div class="item"><span class="ev">'+(x.time?x.time+" ":"")+esc(x.title)+'</span></div>';
+      else if(x.type==="list")html+='<div class="item"><span class="ev" data-open="'+x.id+'" style="background:#2e9d6b">📋 '+esc(x.title)+' '+(x.items||[]).filter(function(i){return i.d}).length+'/'+(x.items||[]).length+'</span></div>';
+      else html+='<div class="item"><span class="ev" data-open="'+x.id+'">'+(x.time?x.time+" ":"")+esc(x.title)+'</span></div>';
     });
     if(list.length>3)html+='<div class="more">他'+(list.length-3)+'件</div>';
     c.innerHTML=html;c.dataset.k=k;g.appendChild(c);
@@ -112,14 +158,14 @@ function render(){
 }
 function row(x,withDate){
   var od=x.type==="task"&&!x.done&&x.date<ymd(new Date());
-  return '<div class="row"><input type="checkbox" '+(x.type==="task"?'data-id="'+x.id+'" '+(x.done?"checked":""):'disabled style="visibility:hidden"')+'><div class="t'+(od?" over":"")+'">'+(x.type==="task"?"☑ ":"")+esc(x.title)+'<br><small>'+(withDate?x.date.replace(/-/g,"/")+" ":"")+(x.time?x.time+(x.end?"〜"+x.end:""):"")+(x.type==="task"?"まで":"")+'</small>'+(x.place?'<br><small>📍 <a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(x.place)+'" target="_blank" rel="noopener">'+esc(x.place)+'</a></small>':'')+(x.memo?'<br><small style="white-space:pre-wrap">📝 '+esc(x.memo)+'</small>':'')+'</div><button data-edit="'+x.id+'">編集</button><button data-del="'+x.id+'">削除</button></div>';
+  return '<div class="row"><input type="checkbox" '+(x.type==="task"?'data-id="'+x.id+'" '+(x.done?"checked":""):'disabled style="visibility:hidden"')+'><div class="t'+(od?" over":"")+'" data-open="'+x.id+'" style="cursor:pointer">'+(x.type==="task"?"☑ ":"")+esc(x.title)+'<br><small>'+(withDate?x.date.replace(/-/g,"/")+" ":"")+(x.time?x.time+(x.end?"〜"+x.end:""):"")+(x.type==="task"?"まで":"")+'</small>'+(x.place?'<br><small>📍 <a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(x.place)+'" target="_blank" rel="noopener">'+esc(x.place)+'</a></small>':'')+(x.memo?'<br><small style="white-space:pre-wrap">📝 '+esc(x.memo)+'</small>':'')+'</div><button data-edit="'+x.id+'">編集</button><button data-del="'+x.id+'">削除</button></div>';
 }
 function side(){
   var a=S.items.filter(function(x){return x.date===sel&&!x.done&&x.type!=="list"});
   $("dayList").innerHTML=a.length?a.map(function(x){return row(x,false)}).join(""):'<div class="empty">なし</div>';
   var t=S.items.filter(function(x){return x.type==="task"&&!x.done}).sort(function(a,b){return a.date.localeCompare(b.date)});
   $("taskList").innerHTML=t.length?t.map(function(x){return row(x,true)}).join(""):'<div class="empty">未完了のタスクはありません</div>';
-  drawLists();
+  drawLists();if(modalId)drawModal();
   var d=S.items.filter(function(x){return x.done});
   $("doneList").innerHTML=d.length?d.map(function(x){return row(x,true)}).join(""):'<div class="empty">なし</div>';
 }
@@ -131,15 +177,19 @@ document.addEventListener("change",function(e){
 });
 document.addEventListener("click",function(e){
   var t=e.target;
+  if(t.dataset.closeform!==undefined||t.id==="formModal"){closeForm();return}
+  if(t.dataset.newday){closeModal();openForm(t.dataset.newday);return}
+  if(t.dataset.close!==undefined||t.id==="modal"){closeModal();return}
+  var op=t.closest&&t.closest("[data-open]");if(op){openModal(op.dataset.open);return}
   if(t.dataset.bg!==undefined){S.bg=t.dataset.bg;applyBg();save();drawSw();return}
   if(t.dataset.day!==undefined){S.dayBg=t.dataset.day;applyBg();save();drawSw();return}
   if(t.dataset.delitem){var p=t.dataset.delitem.split("|");S.items.forEach(function(x){if(x.id===p[0])x.items=(x.items||[]).filter(function(i){return i.id!==p[1]})});OPEN[p[0]]=true;save();render();return}
   if(t.dataset.additem){addItem(t.dataset.additem);return}
   if(t.dataset.clr){S.items.forEach(function(x){if(x.id===t.dataset.clr)x.items=(x.items||[]).filter(function(i){return !i.d})});OPEN[t.dataset.clr]=true;save();render();return}
-  if(t.dataset.edit){startEdit(t.dataset.edit);return}
+  if(t.dataset.edit){closeModal();startEdit(t.dataset.edit);return}
   if(t.dataset.del){if(editId===t.dataset.del)stopEdit();S.items=S.items.filter(function(x){return x.id!==t.dataset.del});save();render();return}
   var day=t.closest&&t.closest(".day");
-  if(day&&t.tagName!=="INPUT"){sel=day.dataset.k;$("fDate").value=sel;render()}
+  if(day&&t.tagName!=="INPUT"&&!t.closest("label")){sel=day.dataset.k;$("fDate").value=sel;render();openModal("day:"+sel)}
 });
 $("prev").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
 $("next").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
@@ -153,13 +203,13 @@ function startEdit(id){
   $("fTitle").value=x.title;$("fDate").value=x.date;$("fTime").value=x.time||"";$("fEnd").value=x.end||"";$("fItems").value=(x.items||[]).map(function(i){return i.t}).join("\n");$("fRem").value=x.rem||"";
   $("fPlace").value=x.place||"";$("fMemo").value=x.memo||"";
   $("add").textContent="更新";$("cancel").hidden=false;
-  $("fTitle").scrollIntoView({block:"center"});$("fTitle").focus();
+  $("formModal").hidden=false;closeModal();$("fTitle").focus();
 }
 function stopEdit(){
   editId=null;$("fTitle").value="";$("fPlace").value="";$("fMemo").value="";$("fTime").value="";$("fRem").value="";$("fEnd").value="";$("fItems").value="";$("msg").textContent="";
   $("add").textContent="追加";$("cancel").hidden=true;
 }
-$("cancel").onclick=stopEdit;
+$("cancel").onclick=closeForm;
 $("add").onclick=function(){
   var title=$("fTitle").value.trim(),date=$("fDate").value;
   if(!title||(!date&&mode!=="ls"))return;
@@ -172,7 +222,7 @@ $("add").onclick=function(){
   if(mode==="ls"){var prev=old&&old.items?old.items.slice():[];x.items=$("fItems").value.split("\n").map(function(s){return s.trim()}).filter(Boolean).map(function(t){var k=-1;prev.forEach(function(p,j){if(k<0&&p.t===t)k=j});if(k>=0)return prev.splice(k,1)[0];return {id:uid(),t:t,d:false}})}
   x.place=$("fPlace").value.trim();x.memo=$("fMemo").value.trim();
   if(old){S.items[S.items.indexOf(old)]=x;delete fired[x.id]}else S.items.push(x);
-  save();stopEdit();if(date)sel=date;render();
+  save();stopEdit();if(date)sel=date;render();$("formModal").hidden=true;
 };
 $("togDone").onclick=function(){var h=$("doneList").hidden;$("doneList").hidden=!h;this.textContent=h?"隠す":"表示"};
 $("notif").onclick=function(){if("Notification" in window)Notification.requestPermission()};
@@ -260,6 +310,53 @@ function drawLists(){
 }
 document.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.addfor){e.preventDefault();addItem(e.target.dataset.addfor)}});
 document.addEventListener("toggle",function(e){var el=e.target;if(el.tagName==="DETAILS"&&el.dataset.lid)OPEN[el.dataset.lid]=el.open},true);
+var modalId=null;
+function openModal(id){modalId=id;$("modal").hidden=false;drawModal()}
+function closeModal(){modalId=null;$("modal").hidden=true}
+function drawModal(){
+  if(modalId&&modalId.indexOf("day:")===0){drawDay(modalId.slice(4));return}
+  var x=S.items.filter(function(i){return i.id===modalId})[0];
+  if(!x){closeModal();return}
+  var sc=$("mCard").scrollTop,h="",its=x.items||[],dn=its.filter(function(i){return i.d}).length;
+  var meta=(x.date?x.date.replace(/-/g,"/"):"")+(x.time?" "+x.time+(x.end?"〜"+x.end:""):"")+(x.type==="task"&&x.date?" まで":"")+(x.type==="list"?"　"+dn+"/"+its.length:"");
+  h+='<div style="display:flex;align-items:center;gap:8px"><h3 style="margin:0;flex:1;font-size:17px;overflow-wrap:anywhere">'+(x.type==="list"?"📋 ":x.type==="task"?"☑ ":"")+esc(x.title)+'</h3><button data-close="1">閉じる</button></div>';
+  if(meta.trim())h+='<div style="margin:6px 0;font-size:13px;color:var(--sub)">'+meta+'</div>';
+  if(x.place)h+='<div style="margin:4px 0;font-size:14px">📍 <a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(x.place)+'" target="_blank" rel="noopener">'+esc(x.place)+'</a></div>';
+  if(x.memo)h+='<div style="margin:4px 0;font-size:14px;white-space:pre-wrap">📝 '+esc(x.memo)+'</div>';
+  if(x.type==="task")h+='<label style="display:flex;gap:6px;align-items:center;font-size:14px;color:var(--text);margin-top:8px"><input type="checkbox" data-id="'+x.id+'" '+(x.done?"checked":"")+'>完了にする</label>';
+  if(x.type==="list"){
+    its.forEach(function(i){
+      h+='<div class="row" style="padding:6px 0"><input type="checkbox" data-lid="'+x.id+'" data-iid="'+i.id+'" '+(i.d?"checked":"")+'><div class="t"'+(i.d?' style="text-decoration:line-through;color:var(--sub)"':'')+'>'+esc(i.t)+'</div><button data-delitem="'+x.id+'|'+i.id+'" style="padding:2px 8px">×</button></div>';
+    });
+    h+='<div style="display:flex;gap:6px;margin-top:8px"><input type="text" data-addfor="'+x.id+'" placeholder="項目を追加"><button data-additem="'+x.id+'">追加</button></div>';
+  }
+  h+='<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">'+(x.type==="list"?'<button data-clr="'+x.id+'">チェック済みを消す</button>':'')+'<button data-edit="'+x.id+'">編集</button><button data-del="'+x.id+'">削除</button></div>';
+  $("mBody").innerHTML=h;$("mCard").scrollTop=sc;
+}
+function listHtml(x){
+  var its=x.items||[],dn=its.filter(function(i){return i.d}).length;
+  return '<div class="row"><div class="t" data-open="'+x.id+'" style="cursor:pointer">📋 '+esc(x.title)+'<br><small>'+dn+'/'+its.length+(x.date?"・"+x.date.replace(/-/g,"/"):"")+(x.time?" "+x.time:"")+'</small></div><button data-open="'+x.id+'">開く</button></div>';
+}
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){if(!$("formModal").hidden)closeForm();else closeModal()}});
+function openForm(date){
+  if(date){sel=date;render()}
+  $("fDate").value=sel;$("formModal").hidden=false;$("fTitle").focus();
+}
+function closeForm(){$("formModal").hidden=true;stopEdit()}
+function drawDay(k){
+  var sc=$("mCard").scrollTop,h="";
+  var a=S.items.filter(function(x){return x.date===k&&!x.done}).sort(function(p,q){return (p.time||"99").localeCompare(q.time||"99")});
+  var d=new Date(k+"T00:00");
+  h+='<div style="display:flex;align-items:center;gap:8px"><h3 style="margin:0;flex:1;font-size:17px">'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+"日月火水木金土".charAt(d.getDay())+'）</h3><button data-close="1">閉じる</button></div>';
+  if(!a.length)h+='<div class="empty" style="margin:10px 0">予定はありません</div>';
+  a.forEach(function(x){
+    var tm=x.time?x.time+(x.end?"〜"+x.end:"")+" ":"";
+    h+='<div class="row">'+(x.type==="task"?'<input type="checkbox" data-id="'+x.id+'">':'<span style="width:13px"></span>')+'<div class="t" data-open="'+x.id+'" style="cursor:pointer">'+(x.type==="list"?"📋 ":x.type==="task"?"☑ ":"")+'<small>'+tm+'</small>'+esc(x.title)+'</div></div>';
+  });
+  h+='<div style="margin-top:12px"><button class="primary" data-newday="'+k+'" style="width:100%">＋ この日に追加</button></div>';
+  $("mBody").innerHTML=h;$("mCard").scrollTop=sc;
+}
+$("fab").onclick=function(){openForm()};
 $("fDate").value=sel;setMode("ev");applyBg();drawSw();render();
 try{
   if(window.claude&&claude.use){
