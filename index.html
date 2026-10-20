@@ -328,17 +328,33 @@ function renderNotes() {
     content.style.cssText =
       "margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere";
 
-    var editButton = document.createElement("button");
-    editButton.type = "button";
-    editButton.textContent = "開いて編集";
-    editButton.addEventListener("click", function() {
-      openNote(note.id);
-    });
+   
+var editButton = document.createElement("button");
+editButton.type = "button";
+editButton.textContent = "開いて編集";
+editButton.addEventListener("click", function() {
+  openNote(note.id);
+});
 
-    card.appendChild(title);
-    card.appendChild(content);
-    card.appendChild(editButton);
-    list.appendChild(card);
+var deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.textContent = "削除";
+deleteButton.style.marginLeft = "8px";
+deleteButton.addEventListener("click", function() {
+  if (!confirm("「" + (note.title || "無題のノート") + "」を削除しますか？")) {
+    return;
+  }
+  S.notes = S.notes.filter(function(item) {
+    return item.id !== note.id;
+  });
+  save();
+  renderNotes();
+});
+card.appendChild(title);
+card.appendChild(content);
+card.appendChild(editButton);
+card.appendChild(deleteButton);
+list.appendChild(card);
   });
 }
 
@@ -393,7 +409,6 @@ function saveNote() {
 }
 // 新しいノート
 $("newNoteBtn").addEventListener("click", function() {
-  alert("ボタンのクリック処理は動いているよ！");
   openNote(null);
 });
 
