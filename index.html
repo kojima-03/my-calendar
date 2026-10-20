@@ -333,7 +333,18 @@ function renderNotes() {
     content.style.cssText =
       "margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere";
 
-   
+// ピン留め
+var pinButton = document.createElement("button");
+pinButton.type = "button";
+pinButton.textContent = note.pinned ? "📍 ピン留め解除" : "📍 ピン留め";
+pinButton.style.marginRight = "8px";
+
+pinButton.addEventListener("click", function() {
+  note.pinned = !note.pinned;
+  save();
+  renderNotes();
+});
+
 var editButton = document.createElement("button");
 editButton.type = "button";
 editButton.textContent = "開いて編集";
@@ -357,6 +368,7 @@ deleteButton.addEventListener("click", function() {
 });
 card.appendChild(title);
 card.appendChild(content);
+card.appendChild(pinButton);
 card.appendChild(editButton);
 card.appendChild(deleteButton);
 list.appendChild(card);
