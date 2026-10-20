@@ -54,18 +54,22 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
 </div>
 <div class="card">
   <h3 style="margin-top:0" id="selTitle"></h3>
-  <div class="seg"><button id="mEv" class="on">予定</button><button id="mTk">タスク</button></div>
+  <div class="seg"><button id="mEv" class="on">予定</button><button id="mTk">タスク</button><button id="mLs">リスト</button></div>
   <label>タイトル</label><input type="text" id="fTitle" placeholder="例：レポート提出">
   <label id="dLabel">日付</label><input type="date" id="fDate">
   <div id="evOnly">
-    <label>時間（任意）</label><input type="time" id="fTime">
+    <label>開始時間（任意）</label><input type="time" id="fTime">
+    <div id="endBox"><label>終了時間（任意）</label><input type="time" id="fEnd"></div>
     <label>リマインダー</label>
     <select id="fRem"><option value="">なし</option><option value="0">開始時刻に通知</option><option value="10">10分前</option><option value="60">1時間前</option><option value="1440">1日前</option></select>
   </div>
+  <div id="lsOnly" hidden><label>項目（1行に1つ）</label><textarea id="fItems" rows="4" placeholder="牛乳&#10;卵&#10;パン"></textarea></div>
   <label>場所（任意）</label><input type="text" id="fPlace" placeholder="例：天神 カフェ">
   <label>メモ（任意）</label><textarea id="fMemo" rows="3" placeholder="持ち物、URL、補足など"></textarea>
   <div style="margin-top:10px"><button class="primary" id="add">追加</button> <button id="cancel" hidden>キャンセル</button></div>
+  <div id="msg" class="empty over"></div>
   <h3>この日の予定・タスク</h3><div id="dayList"></div>
+  <h3>リスト</h3><div id="listBox"></div>
   <h3>期限切れ・今後のタスク</h3><div id="taskList"></div>
   <h3>完了済み <button id="togDone" style="font-size:12px;padding:2px 8px">表示</button></h3><div id="doneList" hidden></div>
   <h3>色の設定</h3><div id="sw" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
@@ -94,9 +98,10 @@ function render(){
     var c=document.createElement("div");
     c.className="day"+(d.getMonth()!==m?" other":"")+(k===td?" today":"")+(k===sel?" sel":"");
     var html='<div class="num">'+d.getDate()+'</div>';
-    var list=S.items.filter(function(x){return x.date===k&&!x.done}).sort(function(a,b){return (a.time||"99").localeCompare(b.time||"99")});
+    var list=S.items.filter(function(x){return x.date===k&&!x.done&&!(x.type==="list"&&(x.items||[]).length&&(x.items||[]).every(function(i){return i.d}))}).sort(function(a,b){return (a.time||"99").localeCompare(b.time||"99")});
     list.slice(0,3).forEach(function(x){
       if(x.type==="task")html+='<label class="item tk" style="margin-top:2px;font-size:11px;color:var(--task)"><input type="checkbox" data-id="'+x.id+'"><span>'+esc(x.title)+'</span></label>';
+      else if(x.type==="list")html+='<div class="item"><span class="ev" style="background:#2e9d6b">📋 '+esc(x.title)+' '+(x.items||[]).filter(function(i){return i.d}).length+'/'+(x.items||[]).length+'</span></div>';
       else html+='<div class="item"><span class="ev">'+(x.time?x.time+" ":"")+esc(x.title)+'</span></div>';
     });
     if(list.length>3)html+='<div class="more">他'+(list.length-3)+'件</div>';
@@ -107,17 +112,19 @@ function render(){
 }
 function row(x,withDate){
   var od=x.type==="task"&&!x.done&&x.date<ymd(new Date());
-  return '<div class="row"><input type="checkbox" '+(x.type==="task"?'data-id="'+x.id+'" '+(x.done?"checked":""):'disabled style="visibility:hidden"')+'><div class="t'+(od?" over":"")+'">'+(x.type==="task"?"☑ ":"")+esc(x.title)+'<br><small>'+(withDate?x.date.replace(/-/g,"/")+" ":"")+(x.time||"")+(x.type==="task"?"まで":"")+'</small>'+(x.place?'<br><small>📍 <a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(x.place)+'" target="_blank" rel="noopener">'+esc(x.place)+'</a></small>':'')+(x.memo?'<br><small style="white-space:pre-wrap">📝 '+esc(x.memo)+'</small>':'')+'</div><button data-edit="'+x.id+'">編集</button><button data-del="'+x.id+'">削除</button></div>';
+  return '<div class="row"><input type="checkbox" '+(x.type==="task"?'data-id="'+x.id+'" '+(x.done?"checked":""):'disabled style="visibility:hidden"')+'><div class="t'+(od?" over":"")+'">'+(x.type==="task"?"☑ ":"")+esc(x.title)+'<br><small>'+(withDate?x.date.replace(/-/g,"/")+" ":"")+(x.time?x.time+(x.end?"〜"+x.end:""):"")+(x.type==="task"?"まで":"")+'</small>'+(x.place?'<br><small>📍 <a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(x.place)+'" target="_blank" rel="noopener">'+esc(x.place)+'</a></small>':'')+(x.memo?'<br><small style="white-space:pre-wrap">📝 '+esc(x.memo)+'</small>':'')+'</div><button data-edit="'+x.id+'">編集</button><button data-del="'+x.id+'">削除</button></div>';
 }
 function side(){
-  var a=S.items.filter(function(x){return x.date===sel&&!x.done});
+  var a=S.items.filter(function(x){return x.date===sel&&!x.done&&x.type!=="list"});
   $("dayList").innerHTML=a.length?a.map(function(x){return row(x,false)}).join(""):'<div class="empty">なし</div>';
   var t=S.items.filter(function(x){return x.type==="task"&&!x.done}).sort(function(a,b){return a.date.localeCompare(b.date)});
   $("taskList").innerHTML=t.length?t.map(function(x){return row(x,true)}).join(""):'<div class="empty">未完了のタスクはありません</div>';
+  drawLists();
   var d=S.items.filter(function(x){return x.done});
   $("doneList").innerHTML=d.length?d.map(function(x){return row(x,true)}).join(""):'<div class="empty">なし</div>';
 }
 document.addEventListener("change",function(e){
+  if(e.target.dataset&&e.target.dataset.iid){S.items.forEach(function(x){if(x.id===e.target.dataset.lid)(x.items||[]).forEach(function(i){if(i.id===e.target.dataset.iid)i.d=e.target.checked})});OPEN[e.target.dataset.lid]=true;save();render();return}
   var id=e.target.dataset&&e.target.dataset.id;if(!id)return;
   S.items.forEach(function(x){if(x.id===id)x.done=e.target.checked});
   save();render();
@@ -126,6 +133,9 @@ document.addEventListener("click",function(e){
   var t=e.target;
   if(t.dataset.bg!==undefined){S.bg=t.dataset.bg;applyBg();save();drawSw();return}
   if(t.dataset.day!==undefined){S.dayBg=t.dataset.day;applyBg();save();drawSw();return}
+  if(t.dataset.delitem){var p=t.dataset.delitem.split("|");S.items.forEach(function(x){if(x.id===p[0])x.items=(x.items||[]).filter(function(i){return i.id!==p[1]})});OPEN[p[0]]=true;save();render();return}
+  if(t.dataset.additem){addItem(t.dataset.additem);return}
+  if(t.dataset.clr){S.items.forEach(function(x){if(x.id===t.dataset.clr)x.items=(x.items||[]).filter(function(i){return !i.d})});OPEN[t.dataset.clr]=true;save();render();return}
   if(t.dataset.edit){startEdit(t.dataset.edit);return}
   if(t.dataset.del){if(editId===t.dataset.del)stopEdit();S.items=S.items.filter(function(x){return x.id!==t.dataset.del});save();render();return}
   var day=t.closest&&t.closest(".day");
@@ -134,31 +144,35 @@ document.addEventListener("click",function(e){
 $("prev").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
 $("next").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
 $("today").onclick=function(){view=new Date();sel=ymd(view);$("fDate").value=sel;render()};
-function setMode(m){mode=m;$("mEv").className=m==="ev"?"on":"";$("mTk").className=m==="tk"?"on":"";$("evOnly").hidden=m==="tk";$("dLabel").textContent=m==="tk"?"期限日（この日にカレンダーに表示）":"日付"}
-$("mEv").onclick=function(){setMode("ev")};$("mTk").onclick=function(){setMode("tk")};
+function setMode(m){mode=m;$("mEv").className=m==="ev"?"on":"";$("mTk").className=m==="tk"?"on":"";$("mLs").className=m==="ls"?"on":"";$("evOnly").hidden=m==="tk";$("endBox").hidden=m!=="ev";$("lsOnly").hidden=m!=="ls";$("dLabel").textContent=m==="tk"?"期限日（この日にカレンダーに表示）":m==="ls"?"日付（任意。入れるとカレンダーにも表示）":"日付"}
+$("mEv").onclick=function(){setMode("ev")};$("mTk").onclick=function(){setMode("tk")};$("mLs").onclick=function(){setMode("ls")};
 var editId=null;
 function startEdit(id){
   var x=S.items.filter(function(i){return i.id===id})[0];if(!x)return;
-  editId=id;setMode(x.type==="task"?"tk":"ev");
-  $("fTitle").value=x.title;$("fDate").value=x.date;$("fTime").value=x.time||"";$("fRem").value=x.rem||"";
+  editId=id;setMode(x.type==="task"?"tk":x.type==="list"?"ls":"ev");
+  $("fTitle").value=x.title;$("fDate").value=x.date;$("fTime").value=x.time||"";$("fEnd").value=x.end||"";$("fItems").value=(x.items||[]).map(function(i){return i.t}).join("\n");$("fRem").value=x.rem||"";
   $("fPlace").value=x.place||"";$("fMemo").value=x.memo||"";
   $("add").textContent="更新";$("cancel").hidden=false;
   $("fTitle").scrollIntoView({block:"center"});$("fTitle").focus();
 }
 function stopEdit(){
-  editId=null;$("fTitle").value="";$("fPlace").value="";$("fMemo").value="";$("fTime").value="";$("fRem").value="";
+  editId=null;$("fTitle").value="";$("fPlace").value="";$("fMemo").value="";$("fTime").value="";$("fRem").value="";$("fEnd").value="";$("fItems").value="";$("msg").textContent="";
   $("add").textContent="追加";$("cancel").hidden=true;
 }
 $("cancel").onclick=stopEdit;
 $("add").onclick=function(){
   var title=$("fTitle").value.trim(),date=$("fDate").value;
-  if(!title||!date)return;
+  if(!title||(!date&&mode!=="ls"))return;
+  $("msg").textContent="";
+  if(mode==="ev"&&$("fEnd").value&&(!$("fTime").value||$("fEnd").value<=$("fTime").value)){$("msg").textContent=$("fTime").value?"終了時間は開始時間より後にしてください":"終了時間を入れるには開始時間も必要です";return}
   var old=editId?S.items.filter(function(i){return i.id===editId})[0]:null;
-  var x={id:old?old.id:String(Date.now())+Math.random().toString(36).slice(2,6),type:mode==="tk"?"task":"event",title:title,date:date,done:old?old.done:false};
-  if(mode==="ev"){x.time=$("fTime").value;x.rem=$("fRem").value;}
+  var x={id:old?old.id:String(Date.now())+Math.random().toString(36).slice(2,6),type:mode==="tk"?"task":mode==="ls"?"list":"event",title:title,date:date,done:old?old.done:false};
+  if(mode==="ev"||mode==="ls"){x.time=$("fTime").value;x.rem=$("fRem").value;}
+  if(mode==="ev")x.end=$("fEnd").value;
+  if(mode==="ls"){var prev=old&&old.items?old.items.slice():[];x.items=$("fItems").value.split("\n").map(function(s){return s.trim()}).filter(Boolean).map(function(t){var k=-1;prev.forEach(function(p,j){if(k<0&&p.t===t)k=j});if(k>=0)return prev.splice(k,1)[0];return {id:uid(),t:t,d:false}})}
   x.place=$("fPlace").value.trim();x.memo=$("fMemo").value.trim();
   if(old){S.items[S.items.indexOf(old)]=x;delete fired[x.id]}else S.items.push(x);
-  save();stopEdit();sel=date;render();
+  save();stopEdit();if(date)sel=date;render();
 };
 $("togDone").onclick=function(){var h=$("doneList").hidden;$("doneList").hidden=!h;this.textContent=h?"隠す":"表示"};
 $("notif").onclick=function(){if("Notification" in window)Notification.requestPermission()};
@@ -167,9 +181,9 @@ function notify(msg){try{if("Notification" in window&&Notification.permission===
 setInterval(function(){
   var now=Date.now(),td=ymd(new Date());
   S.items.forEach(function(x){
-    if(x.type!=="event"||x.rem===""||x.rem===undefined||fired[x.id])return;
+    if((x.type!=="event"&&x.type!=="list")||x.rem===""||x.rem===undefined||fired[x.id]||!x.date)return;
     var at=new Date(x.date+"T"+(x.time||"09:00")).getTime()-Number(x.rem)*60000;
-    if(now>=at&&now<at+120000){fired[x.id]=1;notify("予定：" +x.title+(x.time?"（"+x.time+"）":""))}
+    if(now>=at&&now<at+120000){fired[x.id]=1;notify((x.type==="list"?"リスト：":"予定：")+x.title+(x.time?"（"+x.time+"）":""))}
   });
   if(!fired["d"+td]&&new Date().getHours()>=8){
     var n=S.items.filter(function(x){return x.type==="task"&&!x.done&&x.date<=td}).length;
@@ -219,6 +233,33 @@ function applyRemote(snap){
   else if(ru<su){push();return}
   setSync("同期済み");
 }
+var OPEN={};
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function addItem(lid){
+  var inp=document.querySelector('input[data-addfor="'+lid+'"]');if(!inp)return;
+  var v=inp.value.trim();if(!v)return;
+  S.items.forEach(function(x){if(x.id===lid){x.items=x.items||[];x.items.push({id:uid(),t:v,d:false})}});
+  OPEN[lid]=true;save();render();
+  var n=document.querySelector('input[data-addfor="'+lid+'"]');if(n)n.focus();
+}
+function listHtml(x){
+  var its=x.items||[],dn=its.filter(function(i){return i.d}).length;
+  var h='<details data-lid="'+x.id+'"'+(OPEN[x.id]?" open":"")+' style="border-bottom:1px solid var(--line);padding:6px 0"><summary style="cursor:pointer;font-size:14px">📋 '+esc(x.title)+' <small style="color:var(--sub)">'+dn+'/'+its.length+(x.date?"・"+x.date.replace(/-/g,"/"):"")+(x.time?" "+x.time:"")+'</small></summary>';
+  if(x.place)h+='<div style="margin:4px 0 0 8px"><small>📍 '+esc(x.place)+'</small></div>';
+  if(x.memo)h+='<div style="margin:4px 0 0 8px;white-space:pre-wrap"><small>📝 '+esc(x.memo)+'</small></div>';
+  its.forEach(function(i){
+    h+='<div class="row" style="border:0;padding:3px 0 3px 8px"><input type="checkbox" data-lid="'+x.id+'" data-iid="'+i.id+'" '+(i.d?"checked":"")+'><div class="t"'+(i.d?' style="text-decoration:line-through;color:var(--sub)"':'')+'>'+esc(i.t)+'</div><button data-delitem="'+x.id+'|'+i.id+'" style="padding:2px 8px">×</button></div>';
+  });
+  h+='<div style="display:flex;gap:6px;margin:6px 0 0 8px"><input type="text" data-addfor="'+x.id+'" placeholder="項目を追加"><button data-additem="'+x.id+'">追加</button></div>';
+  h+='<div style="display:flex;gap:6px;margin:8px 0 0 8px"><button data-clr="'+x.id+'">チェック済みを消す</button><button data-edit="'+x.id+'">編集</button><button data-del="'+x.id+'">削除</button></div></details>';
+  return h;
+}
+function drawLists(){
+  var L=S.items.filter(function(x){return x.type==="list"}).sort(function(a,b){return (a.date||"9999").localeCompare(b.date||"9999")});
+  $("listBox").innerHTML=L.length?L.map(listHtml).join(""):'<div class="empty">リストはありません（上の「リスト」から作れます）</div>';
+}
+document.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.addfor){e.preventDefault();addItem(e.target.dataset.addfor)}});
+document.addEventListener("toggle",function(e){var el=e.target;if(el.tagName==="DETAILS"&&el.dataset.lid)OPEN[el.dataset.lid]=el.open},true);
 $("fDate").value=sel;setMode("ev");applyBg();drawSw();render();
 try{
   if(window.claude&&claude.use){
