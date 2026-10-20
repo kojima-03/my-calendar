@@ -755,6 +755,26 @@ async function handleSession(session) {
       if (!remote || !Array.isArray(remote.items)) {
         throw new Error("保存データの形式を確認できません");
       }
+      
+      // 端末側とクラウド側のノートを統合する
+      var localNotes = Array.isArray(S.notes) ? S.notes : [];
+      var remoteNotes = Array.isArray(remote.notes) ? remote.notes : [];
+      var mergedNotes = remoteNotes.slice();
+
+      localNotes.forEach(function(localNote) {
+        var index = mergedNotes.findIndex(function(remoteNote) {
+          return remoteNote.id === localNote.id;
+        });
+        if (index === -1) {
+          mergedNotes.push(localNote);
+        } else if (
+          (localNote.updated || 0) >
+          (mergedNotes[index].updated || 0)
+        ) {
+          mergedNotes[index] = localNote;
+        }
+      });
+      remote.notes = mergedNotes;
 
       // 端末側とクラウド側の両方にデータがある場合、
       // 自動で上書きせず、安全のため同期を止める
@@ -762,11 +782,6 @@ async function handleSession(session) {
         Array.isArray(S.items) && S.items.length > 0;
       var remoteHasData = remote.items.length > 0;
 
-      if (localHasData && remoteHasData) {
-        throw new Error(
-          "端末とクラウドの両方に予定があります。自動上書きを防ぐため同期を停止しました"
-        );
-      }
 
       // クラウドに予定があり、端末側が空なら読み込む
       if (remoteHasData && !localHasData) {
@@ -805,7 +820,8 @@ async function handleSession(session) {
       return;
     }
 
-    cloudReady = true;
+       cloudReady = true;
+    await push();
     setSync("同期済み");
 
  
