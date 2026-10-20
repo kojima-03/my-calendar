@@ -432,6 +432,7 @@ function saveNote() {
       id: String(now) + "-" + Math.random().toString(36).slice(2, 8),
       title: title,
       content: content,
+      created: now,
       updated: now
     });
   }
