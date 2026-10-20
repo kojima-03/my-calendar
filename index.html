@@ -347,9 +347,7 @@ function openNote(id) {
   var note = S.notes.find(function(item) {
     return item.id === id;
   });
-
   editingNoteId = id || null;
-
   $("noteTitle").value = note ? note.title : "";
   $("noteContent").value = note ? note.content : "";
   $("noteEditor").hidden = false;
@@ -393,9 +391,9 @@ function saveNote() {
   $("noteEditor").hidden = true;
   editingNoteId = null;
 }
-
 // 新しいノート
 $("newNoteBtn").addEventListener("click", function() {
+  alert("ボタンのクリック処理は動いているよ！");
   openNote(null);
 });
 
