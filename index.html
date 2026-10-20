@@ -94,7 +94,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 <body>
 <div class="wrap">
   
-<div class="card" id="authPanel">
+<div class="card" id="authPanel" hidden>
   <h2>マイカレンダー</h2>
   <p>ログインして、予定をどの端末からでも確認しよう。</p>
 
@@ -111,6 +111,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
   <button id="signupBtn" type="button">新規登録</button>
 
   <p id="authMessage" role="status"></p>
+  <button id="cancelAuthBtn" type="button">キャンセル</button>
 </div>
 
 <div class="card">
@@ -422,22 +423,20 @@ var SUPABASE_KEY = "sb_publishable_FnWp2dhIHjniw8NdnHL_HQ_TEgL3fJg";
 
 var activeUid = null;
 
-function showAuth(loggedIn) {
-  $("authPanel").hidden = loggedIn;
-
-  document.querySelectorAll(".wrap > .card:not(#authPanel)")
-    .forEach(function(card) {
-      card.hidden = !loggedIn;
-    });
-
-  $("fab").hidden = !loggedIn;
-
-  if (!loggedIn) {
-  $("formModal").hidden = true;
+function showAuth(show) {
+  $("authPanel").hidden = !show;
 }
-  logoutBtn.hidden = !loggedIn;
-}
+var syncLoginBtn = document.createElement("button");
+syncLoginBtn.textContent = "クラウド同期";
+syncLoginBtn.style.marginLeft = "8px";
+$("sync").insertAdjacentElement("afterend", syncLoginBtn);
 
+syncLoginBtn.onclick = function() {
+  showAuth(true);
+};
+  $("cancelAuthBtn").onclick = function() {
+  showAuth(false);
+};
 var logoutBtn = document.createElement("button");
 logoutBtn.textContent = "ログアウト";
 logoutBtn.style.marginTop = "8px";
@@ -446,13 +445,13 @@ logoutBtn.hidden = true;
 
 async function handleSession(session) {
   if (!session) {
-    activeUid = null;
-    currentUser = null;
-    cloudReady = false;
-    showAuth(false);
-    setSync("ログインしてください");
-    return;
-  }
+  activeUid = null;
+  currentUser = null;
+  cloudReady = false;
+  showAuth(false);
+  setSync("同期していません（端末内に保存）");
+  return;
+}
 
   var user = session.user;
 
@@ -462,7 +461,7 @@ async function handleSession(session) {
   currentUser = user;
   cloudReady = false;
 
-  showAuth(true);
+  showAuth(false);
   setSync("同期中…");
   $("authMessage").textContent = "";
 
