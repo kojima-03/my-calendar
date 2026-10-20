@@ -93,7 +93,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 </head>
 <body>
 <div class="wrap">
-  
+<div class="seg" id="viewTabs">
+  <button type="button" id="calendarTab" class="on">カレンダー</button>
+  <button type="button" id="notesTab">ノート</button>
+</div>
 <div class="card" id="authPanel" hidden>
   <h2>マイカレンダー</h2>
   <p>ログインして、予定をどの端末からでも確認しよう。</p>
@@ -143,10 +146,58 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
   <div style="margin-top:12px"><button id="notif">通知を許可</button> <small class="empty">ページを開いている間だけ通知されます</small></div>
 </div>
 </div>
+  
+<div class="card" id="notesView" hidden>
+  <h2>ノート</h2>
+  <button type="button" id="newNoteBtn">＋ 新しいノート</button>
+  <input type="search" id="noteSearch" placeholder="タイトル・本文を検索">
+  <div id="notesList"></div>
+  <div id="noteEditor" hidden>
+    <label for="noteTitle">タイトル</label>
+    <input type="text" id="noteTitle" placeholder="ノートのタイトル">
+    <label for="noteContent">本文</label>
+    <textarea id="noteContent" rows="12" placeholder="メモや議事録を書こう"></textarea>
+    <div>
+      <button type="button" id="saveNoteBtn">保存</button>
+      <button type="button" id="cancelNoteBtn">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <button id="fab" class="primary" aria-label="新規作成">＋</button>
 <div class="modal" id="modal" hidden><div class="mcard" id="mCard"><div id="mBody"></div></div></div>
 <script>
 var KEY="mycal-v1",S={items:[]},view=new Date(),sel=ymd(new Date()),mode="ev";
+  
+var currentView = "calendar";
+
+function switchView(viewName) {
+  currentView = viewName;
+
+  $("calendarTab").classList.toggle("on", viewName === "calendar");
+  $("notesTab").classList.toggle("on", viewName === "notes");
+
+  // カレンダーの表示・非表示を切り替える
+  $("grid").closest(".card").hidden = viewName !== "calendar";
+
+  // 予定やタスクの一覧が入っているカードを切り替える
+  $("dayList").closest(".card").hidden = viewName !== "calendar";
+
+  // ノート画面を切り替える
+  $("notesView").hidden = viewName !== "notes";
+
+  // カレンダーの新規作成ボタンはカレンダー画面だけで表示
+  $("fab").hidden = viewName !== "calendar";
+}
+
+$("calendarTab").addEventListener("click", function() {
+  switchView("calendar");
+});
+
+$("notesTab").addEventListener("click", function() {
+  switchView("notes");
+});
+
 try{var raw=localStorage.getItem(KEY);if(raw)S=JSON.parse(raw)}catch(e){}
 
 var ref=null,pushT=null,first=true;
