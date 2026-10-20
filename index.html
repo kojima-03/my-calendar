@@ -156,24 +156,25 @@ function setSync(t){
   $("sync").textContent=t;
 }
 
-function push(){
-  if(!supabaseClient||!currentUser||!cloudReady)return;
 
-  supabaseClient
+async function push() {
+  if (!supabaseClient || !currentUser || !cloudReady) {
+    throw new Error("同期の準備ができていません");
+  }
+
+  var result = await supabaseClient
     .from("calendar_data")
     .upsert({
-      user_id:currentUser.id,
-      data:S,
-      updated_at:new Date().toISOString()
-    })
-    .then(function(result){
-      if(result.error)throw result.error;
-      setSync("同期済み");
-    })
-    .catch(function(error){
-      console.error(error);
-      setSync("同期できませんでした（この端末には保存済み）");
+      user_id: currentUser.id,
+      data: S,
+      updated_at: new Date().toISOString()
     });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  setSync("同期済み");
 }
 
 function save(){
@@ -443,15 +444,16 @@ logoutBtn.style.marginTop = "8px";
 $("sync").insertAdjacentElement("afterend", logoutBtn);
 logoutBtn.hidden = true;
 
+
 async function handleSession(session) {
   if (!session) {
-  activeUid = null;
-  currentUser = null;
-  cloudReady = false;
-  showAuth(false);
-  setSync("同期していません（端末内に保存）");
-  return;
-}
+    activeUid = null;
+    currentUser = null;
+    cloudReady = false;
+    showAuth(false);
+    setSync("同期していません（端末内に保存）");
+    return;
+  }
 
   var user = session.user;
 
@@ -475,40 +477,75 @@ async function handleSession(session) {
     if (result.error) throw result.error;
 
     if (result.data) {
-      // クラウドにデータがあれば、そちらを読み込む
       var remote = result.data.data;
 
       if (!remote || !Array.isArray(remote.items)) {
         throw new Error("保存データの形式を確認できません");
       }
 
-      S = remote;
+      // 端末側とクラウド側の両方にデータがある場合、
+      // 自動で上書きせず、安全のため同期を止める
+      var localHasData =
+        Array.isArray(S.items) && S.items.length > 0;
+      var remoteHasData = remote.items.length > 0;
 
-      try {
-        localStorage.setItem(KEY, JSON.stringify(S));
-      } catch (e) {}
+      if (localHasData && remoteHasData) {
+        throw new Error(
+          "端末とクラウドの両方に予定があります。自動上書きを防ぐため同期を停止しました"
+        );
+      }
 
-      applyBg();
-      drawSw();
-      render();
+      // クラウドに予定があり、端末側が空なら読み込む
+      if (remoteHasData && !localHasData) {
+        S = remote;
+
+        try {
+          localStorage.setItem(KEY, JSON.stringify(S));
+        } catch (e) {}
+
+        applyBg();
+        drawSw();
+        render();
+      } else if (localHasData && !remoteHasData) {
+        // 端末に予定があり、クラウド側が空なら
+        // 端末の予定をクラウドへ保存する
+        cloudReady = true;
+        await push();
+        return;
+      } else {
+        // 両方とも予定が空の場合
+        S = remote;
+
+        try {
+          localStorage.setItem(KEY, JSON.stringify(S));
+        } catch (e) {}
+
+        applyBg();
+        drawSw();
+        render();
+      }
     } else {
-      // 初回は今の端末にあるデータをクラウドへ保存
+      // クラウドに保存データがない場合
+      // 端末側のデータを初回保存する
       cloudReady = true;
       await push();
-
-      setSync("初回データを保存しました");
       return;
     }
 
     cloudReady = true;
     setSync("同期済み");
 
-  } catch (error) {
-    cloudReady = false;
-    console.error(error);
-    setSync("同期エラー：接続設定を確認してください");
-  }
+ 
+} catch (error) {
+  cloudReady = false;
+  activeUid = null;
+  currentUser = null;
+  console.error(error);
+  setSync("同期エラー：" + error.message);
 }
+
+}
+
 
 
 if (
