@@ -522,7 +522,10 @@ document.addEventListener("click",function(e){
   if(t.dataset.edit){closeModal();startEdit(t.dataset.edit);return}
   if(t.dataset.del){if(editId===t.dataset.del)stopEdit();S.items=S.items.filter(function(x){return x.id!==t.dataset.del});save();render();return}
   var day=t.closest&&t.closest(".day");
-  if(day&&t.tagName!=="INPUT"&&!t.closest("label")){sel=day.dataset.k;$("fDate").value=sel;render();openModal("day:"+sel)}
+  if(day&&t.tagName!=="INPUT"&&!t.closest("label")){sel=day.dataset.k;$("fDate").value=sel;render();
+if(!window.matchMedia("(max-width: 768px)").matches){
+  openModal("day:"+sel);
+}}
 });
 $("prev").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
 $("next").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
