@@ -92,7 +92,16 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
 #formModal{align-items:flex-end}
 #formModal .mcard{max-width:520px;max-height:90vh;border-radius:16px 16px 0 0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 @media(min-width:800px){#formModal{align-items:center}#formModal .mcard{border-radius:12px;max-width:420px}}
-@media(max-width:600px){body{padding:8px}.day{min-height:64px}.item{font-size:10px}}
+
+@media(max-width:600px){
+  body{padding:8px}
+  .day{min-height:64px}
+  .item{font-size:10px}
+  #dayList .row{padding:10px 0;gap:8px}
+  #dayList .row .t{font-size:14px}
+  #dayList .row button{padding:7px 10px}
+}
+
 :root{--accent:#5468f0;--task:#e8890c;--line:#e8e6e1}
 body{font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;background:linear-gradient(160deg,var(--bg),color-mix(in srgb,var(--accent) 7%,var(--bg))) fixed;min-height:100vh}
 .card{border-radius:20px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);box-shadow:0 10px 30px rgba(30,40,80,.07);padding:16px}
