@@ -479,7 +479,7 @@ function render(){
     var html='<div class="num">'+d.getDate()+'</div>';
     var list=S.items.filter(function(x){return x.date===k&&!x.done&&!(x.type==="list"&&(x.items||[]).length&&(x.items||[]).every(function(i){return i.d}))}).sort(function(a,b){return (a.time||"99").localeCompare(b.time||"99")});
     list.slice(0,3).forEach(function(x){
-      if(x.type==="task")html+='<label class="item tk" style="margin-top:2px;font-size:11px;color:var(--task)"><input type="checkbox" data-id="'+x.id+'"><span>'+esc(x.title)+'</span></label>';
+     if(x.type==="task")html+='<div class="item tk"><span>'+esc(x.title)+'</span></div>';
       else if(x.type==="list")html+='<div class="item"><span class="ev" data-open="'+x.id+'" style="background:#2e9d6b">📋 '+esc(x.title)+' '+(x.items||[]).filter(function(i){return i.d}).length+'/'+(x.items||[]).length+'</span></div>';
       else html+='<div class="item"><span class="ev" data-open="'+x.id+'">'+(x.time?x.time+" ":"")+esc(x.title)+'</span></div>';
     });
