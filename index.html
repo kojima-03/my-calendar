@@ -832,6 +832,8 @@ async function handleSession(session) {
       return;
     }
 
+    renderNotes();
+
        cloudReady = true;
     await push();
     setSync("同期済み");
