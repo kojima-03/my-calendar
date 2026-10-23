@@ -93,13 +93,31 @@ input[type=text],input[type=date],input[type=time],select,textarea{width:100%;fo
 #formModal .mcard{max-width:520px;max-height:90vh;border-radius:16px 16px 0 0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 @media(min-width:800px){#formModal{align-items:center}#formModal .mcard{border-radius:12px;max-width:420px}}
 
+
 @media(max-width:600px){
   body{padding:8px}
   .day{min-height:64px}
   .item{font-size:10px}
-  #dayList .row{padding:10px 0;gap:8px}
-  #dayList .row .t{font-size:14px}
-  #dayList .row button{padding:7px 10px}
+
+  /* その日の予定・タスク一覧 */
+  #dayList .row{
+    padding:14px 0;
+    gap:10px;
+    align-items:center;
+  }
+
+  /* 予定名・タスク名 */
+  #dayList .row .t{
+    font-size:16px;
+    line-height:1.5;
+  }
+
+  /* 操作ボタン */
+  #dayList .row button{
+    padding:10px 14px;
+    min-height:42px;
+    font-size:14px;
+  }
 }
 
 :root{--accent:#5468f0;--task:#e8890c;--line:#e8e6e1}
