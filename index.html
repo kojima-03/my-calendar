@@ -338,12 +338,26 @@ function renderNotes() {
     title.style.margin = "0 0 6px";
 
    
+
 var content = document.createElement("p");
 content.textContent = note.content || "本文なし";
 content.style.cssText =
   "margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere;" +
   "display:-webkit-box;-webkit-line-clamp:2;" +
-  "-webkit-box-orient:vertical;overflow:hidden";
+  "-webkit-box-orient:vertical;overflow:hidden;cursor:pointer";
+
+content.addEventListener("click", function() {
+  if (content.dataset.expanded === "true") {
+    content.dataset.expanded = "false";
+    content.style.display = "-webkit-box";
+    content.style.webkitLineClamp = "2";
+  } else {
+    content.dataset.expanded = "true";
+    content.style.display = "block";
+    content.style.webkitLineClamp = "unset";
+  }
+});
+
 
     
 var dateInfo = document.createElement("div");
