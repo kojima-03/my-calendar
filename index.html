@@ -195,8 +195,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
   <label>タイトル</label><input type="text" id="fTitle" placeholder="例：レポート提出">
   <label id="dLabel">日付</label><input type="date" id="fDate">
   <div id="evOnly">
-    <label>開始時間（任意）</label><input type="time" id="fTime">
-    <div id="endBox"><label>終了時間（任意）</label><input type="time" id="fEnd"></div>
+   <label>開始時間（任意）</label><input type="text" id="fTime" placeholder="例：09:30" inputmode="text">
+<div id="endBox"><label>終了時間（任意）</label><input type="text" id="fEnd" placeholder="例：10:30" inputmode="text"></div>
     <label>リマインダー</label>
     <select id="fRem"><option value="">なし</option><option value="0">開始時刻に通知</option><option value="10">10分前</option><option value="60">1時間前</option><option value="1440">1日前</option></select>
   </div>
@@ -595,6 +595,17 @@ $("add").onclick=function(){
   var title=$("fTitle").value.trim(),date=$("fDate").value;
   if(!title||(!date&&mode!=="ls"))return;
   $("msg").textContent="";
+  var time=$("fTime").value.trim();
+  var end=$("fEnd").value.trim();
+  var timePattern=/^([01]\d|2[0-3]):[0-5]\d$/;
+  if(time&&!timePattern.test(time)){
+    $("msg").textContent="開始時間は09:30のように入力してください";
+    return;
+  }
+  if(end&&!timePattern.test(end)){
+    $("msg").textContent="終了時間は10:30のように入力してください";
+    return;
+  }
   if(mode==="ev"&&$("fEnd").value&&(!$("fTime").value||$("fEnd").value<=$("fTime").value)){$("msg").textContent=$("fTime").value?"終了時間は開始時間より後にしてください":"終了時間を入れるには開始時間も必要です";return}
   var old=editId?S.items.filter(function(i){return i.id===editId})[0]:null;
   var x={id:old?old.id:String(Date.now())+Math.random().toString(36).slice(2,6),type:mode==="tk"?"task":mode==="ls"?"list":"event",title:title,date:date,done:old?old.done:false};
