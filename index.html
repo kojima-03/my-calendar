@@ -195,8 +195,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
   <label>タイトル</label><input type="text" id="fTitle" placeholder="例：レポート提出">
   <label id="dLabel">日付</label><input type="date" id="fDate">
   <div id="evOnly">
-   <label>開始時間（任意）</label><input type="text" id="fTime" placeholder="例：09:30" inputmode="text">
-<div id="endBox"><label>終了時間（任意）</label><input type="text" id="fEnd" placeholder="例：10:30" inputmode="text"></div>
+   <label>開始時間（任意）</label><input type="text" id="fTime" placeholder="例：0930" inputmode="numeric" maxlength="5">
+<div id="endBox"><label>終了時間（任意）</label><input type="text" id="fEnd" placeholder="例：1030" inputmode="numeric" maxlength="5"></div>
     <label>リマインダー</label>
     <select id="fRem"><option value="">なし</option><option value="0">開始時刻に通知</option><option value="10">10分前</option><option value="60">1時間前</option><option value="1440">1日前</option></select>
   </div>
@@ -575,6 +575,20 @@ if(!window.matchMedia("(max-width: 768px)").matches){
 $("prev").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
 $("next").onclick=function(){view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
 $("today").onclick=function(){view=new Date();sel=ymd(view);$("fDate").value=sel;render()};
+  function formatTimeInput(input){
+  input.addEventListener("input",function(){
+    var digits=input.value.replace(/\D/g,"").slice(0,4);
+
+    if(digits.length===4){
+      input.value=digits.slice(0,2)+":"+digits.slice(2,4);
+    }else{
+      input.value=digits;
+    }
+  });
+}
+
+formatTimeInput($("fTime"));
+formatTimeInput($("fEnd"));
 function setMode(m){mode=m;$("mEv").className=m==="ev"?"on":"";$("mTk").className=m==="tk"?"on":"";$("mLs").className=m==="ls"?"on":"";$("evOnly").hidden=m==="tk";$("endBox").hidden=m!=="ev";$("lsOnly").hidden=m!=="ls";$("dLabel").textContent=m==="tk"?"期限日（この日にカレンダーに表示）":m==="ls"?"日付（任意。入れるとカレンダーにも表示）":"日付"}
 $("mEv").onclick=function(){setMode("ev")};$("mTk").onclick=function(){setMode("tk")};$("mLs").onclick=function(){setMode("ls")};
 var editId=null;
