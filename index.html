@@ -197,6 +197,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
   <div class="seg"><button id="mEv" class="on">予定</button><button id="mTk">タスク</button><button id="mLs">リスト</button></div>
   <label>タイトル</label><input type="text" id="fTitle" placeholder="例：レポート提出">
   <label id="dLabel">日付</label><input type="date" id="fDate">
+    <div id="endDateBox" hidden>
+  <label for="fEndDate">終了日</label>
+  <input type="date" id="fEndDate">
+</div>
   <div id="evOnly">
    <label>開始時間（任意）</label><input type="text" id="fTime" placeholder="例：0930" inputmode="numeric" maxlength="5">
 <div id="endBox"><label>終了時間（任意）</label><input type="text" id="fEnd" placeholder="例：1030" inputmode="numeric" maxlength="5"></div>
@@ -592,7 +596,8 @@ $("today").onclick=function(){view=new Date();sel=ymd(view);$("fDate").value=sel
 
 formatTimeInput($("fTime"));
 formatTimeInput($("fEnd"));
-function setMode(m){mode=m;$("mEv").className=m==="ev"?"on":"";$("mTk").className=m==="tk"?"on":"";$("mLs").className=m==="ls"?"on":"";$("evOnly").hidden=m==="tk";$("endBox").hidden=m!=="ev";$("lsOnly").hidden=m!=="ls";$("dLabel").textContent=m==="tk"?"期限日（この日にカレンダーに表示）":m==="ls"?"日付（任意。入れるとカレンダーにも表示）":"日付"}
+function setMode(m){mode=m;$("mEv").className=m==="ev"?"on":"";$("mTk").className=m==="tk"?"on":"";$("mLs").className=m==="ls"?"on":"";$("evOnly").hidden=m==="tk";$("endBox").hidden=m!=="ev";$("lsOnly").hidden=m!=="ls";$("dLabel").textContent=m==="tk"?"期限日（この日にカレンダーに表示）":m==="ls"?"日付（任意。入れるとカレンダーにも表示）":"日付"
+                   $("endDateBox").hidden=m!=="ev";}
 $("mEv").onclick=function(){setMode("ev")};$("mTk").onclick=function(){setMode("tk")};$("mLs").onclick=function(){setMode("ls")};
 var editId=null;
 function startEdit(id){
